@@ -1,0 +1,45 @@
+import torch.optim as optim
+
+# Device
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+# Model instance
+model = ImageRNN(BATCH_SIZE, N_STEPS, N_INPUTS, N_NEURONS, N_OUTPUTS)
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+def get_accuracy(logit, target, batch_size):
+    ''' Obtain accuracy for training round '''
+    corrects = (torch.max(logit, 1)[1].view(target.size()).data == target.data).sum()
+    accuracy = 100.0 * corrects/batch_size
+    return accuracy.item()
+    for epoch in range(N_EPHOCS):  # loop over the dataset multiple times
+    train_running_loss = 0.0
+    train_acc = 0.0
+    model.train()
+    
+    # TRAINING ROUND
+    for i, data in enumerate(trainloader):
+         # zero the parameter gradients
+        optimizer.zero_grad()
+        
+        # reset hidden states
+        model.hidden = model.init_hidden() 
+        
+        # get the inputs
+        inputs, labels = data
+        inputs = inputs.view(-1, 28,28) 
+
+        # forward + backward + optimize
+        outputs = model(inputs)
+
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        train_running_loss += loss.detach().item()
+        train_acc += get_accuracy(outputs, labels, BATCH_SIZE)
+         
+    model.eval()
+    print('Epoch:  %d | Loss: %.4f | Train Accuracy: %.2f' 
+          %(epoch, train_running_loss / i, train_acc/i))
